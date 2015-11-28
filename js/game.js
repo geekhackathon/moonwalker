@@ -1,15 +1,5 @@
 'use strict';
 
-var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
-
-function preload() {
-    game.load.image('sky', 'assets/sky.png');
-    game.load.image('ground', 'assets/platform.png');
-    game.load.image('star', 'assets/star.png');
-    game.load.spritesheet('dude', 'assets/mj.png', 32, 75);
-    // game.load.audio('music', 'assets/music.ogg', 'assets/music.mp3');
-}
-
 var player;
 var platforms;
 var cursors;
@@ -22,12 +12,15 @@ var deathStar;
 var upperLedge;
 var lowerLedge;
 
-// function preload(){
-//     console.log(game);
-//     // var music = game.add.audio('music');
-//     // console.log(music);
-//     // music.play();
-// }
+var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
+
+function preload() {
+  game.load.image('sky', 'assets/sky.png');
+  game.load.image('ground', 'assets/platform.png');
+  game.load.image('star', 'assets/star.png');
+  game.load.spritesheet('dude', 'assets/mj.png', 32, 75);
+    // game.load.audio('music', 'assets/music.ogg', 'assets/music.mp3');
+}
 
 var createGround = function(platforms){
   var ground = platforms.create(0, game.world.height - 64, 'ground');
