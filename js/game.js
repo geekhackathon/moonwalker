@@ -53,25 +53,45 @@ var createPlayer = function(){
 
   player.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
   player.animations.add('right', [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, true);
-  player.anchor.setTo(.5, 0);
+  player.anchor.setTo(.5, 1);
   player.body.collideWorldBounds = true;
   // player.body.height *= 0.5;
   return player;
 };
 
 var createDeathStar = function(){
-  var deathStar = game.add.sprite(100, -1500, 'star');
+  var deathStar = game.add.sprite(Math.random() * game.world.width, -1500, 'star');
   deathStar.tint = 0x000000;
   // deathStar.scale.setTo(2,2);
   game.physics.arcade.enableBody(deathStar);
   // deathStar.body.immovable = true;
   // deathStar.enableBody = true;
-  deathStar.body.gravity.y = 3;
+  deathStar.body.gravity.y = 300;
   deathStar.body.bounce.y = 0.7 + Math.random() * 0.2;
   return deathStar;
 };
 
+var createStars = function(){
+  var stars = game.add.group();
+  stars.enableBody = true;
+  for (var i = 0; i < 12; i++)
+  {
+      var star = stars.create(i * 70, 0, 'star');
+      star.number = i;
+
+      star.anchor.setTo(0.5, 0.5);
+      star.body.gravity.y = 300 * Math.random();
+      star.body.bounce.y = 0.7 + Math.random() * 0.2;
+      star.body.angularVelocity = Math.random() * 300;
+  }
+
+  return stars;
+};
+
 function create() {
+    // var music = game.add.audio('music');
+    // // console.log(music);
+    // music.play();
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -90,27 +110,14 @@ function create() {
     // console.log(player.body.height);
     // console.log(player.body.height /= 2);
 
-    stars = game.add.group();
-    stars.enableBody = true;
-    for (var i = 0; i < 12; i++)
-    {
-        var star = stars.create(i * 70, 0, 'star');
-        star.number = i;
-
-        //  Let gravity do its thing
-        star.body.gravity.y = 300 * Math.random();
-
-        //  This just gives each star a slightly random bounce value
-        star.body.bounce.y = 0.7 + Math.random() * 0.2;
-    }
-
     scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
-    lastStar = game.add.text(16, 48, 'Last Star: 0', { fontSize: '32px', fill: '#fff' });
+    // lastStar = game.add.text(16, 48, 'Last Star: 0', { fontSize: '32px', fill: '#fff' });
 
     cursors = game.input.keyboard.createCursorKeys();
     cursors.jump = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
     deathStar = createDeathStar();
+    stars = createStars();
 }
 
 var move = {
@@ -161,21 +168,31 @@ function update() {
     // player.body.velocity.x = 0;
     // player.body.velocity.y = 0;
 
-    game.physics.arcade.overlap(player, deathStar, function(a, b){
-        b.tint = 0xff0000;
-        a.tint = 0x00ff00;
-        // a.setAnchor(0.5, 0.5);
-        // a.anchor.x = 0.5;
-        // a.anchor.y = 1.5;
+    game.physics.arcade.overlap(player, deathStar, function(player, star){
+        star.tint = 0xff0000;
+        player.tint = 0x00ff00;
+        // player.setAnchor(0.5, 0.5);
+        // player.anchor.x = 0.5;
+        // player.anchor.y = 1.5;
 
-        a.scale.setTo(1.5, 1.5);
+        // player.scale.setTo(3.5, 3.5);
+        player.scale.x = 3;
+        player.scale.y = 3;
+        game.add.text(50, game.world.height/2, 'You won, now you are big and green!', { fontSize: '40px', fill: '#ffffff' });
+        star.kill();
+        // console.log(stars);
+        stars.destroy();
+        game.paused = true;
+        // stars.children.forEach(function(star){
+          // start.kill();
+        // });
     });
 
     game.physics.arcade.collide(player, platforms, function(player, the_platform){
         // console.log(arguments);
         if (platforms.collapsable.indexOf(the_platform) == -1)
             return;
-        console.log(arguments);
+        // console.log(arguments);
         the_platform.tint = 0xff00ff;
         player.tint = 0xf0f000;
         // a.scale.setTo(1.5, 1.5);
@@ -221,10 +238,10 @@ function update() {
 }
 
 function collectStar (player, star) {
+  star.kill();
+  player.tint = (0xffffff * Math.random() | 0);
 
-    star.kill();
-
-    score += 10;
-    scoreText.text = 'Score: ' + score;
-    lastStar.text = 'Last Star: ' + star.number;
+  score += 10;
+  scoreText.text = 'Score: ' + score;
+  // lastStar.text = 'Last Star: ' + star.number;
 }
