@@ -7,6 +7,7 @@ function preload() {
     game.load.image('ground', 'assets/platform.png');
     game.load.image('star', 'assets/star.png');
     game.load.spritesheet('dude', 'assets/mj.png', 32, 75);
+    game.load.audio('music', 'assets/music.mp3', 'assets/music.ogg');
 }
 
 var player;
@@ -22,6 +23,8 @@ var upperLedge;
 var lowerLedge;
 
 function create() {
+    var music = game.add.audio('music');
+    music.play();
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -39,9 +42,13 @@ function create() {
 
     upperLedge = platforms.create(game.world.width - 400, game.world.height - 200, 'ground');
     upperLedge.body.immovable = true;
+    upperLedge.body.checkCollision.down = false;
+    // upperLedge.body.checkCollision.left = false;
 
     lowerLedge = platforms.create(-150, 250, 'ground');
     lowerLedge.body.immovable = true;
+    lowerLedge.body.checkCollision.down = false;
+    // lowerLedge.body.checkCollision.right = false;
 
     player = game.add.sprite(32, game.world.height - 200, 'dude');
     game.physics.arcade.enable(player);
@@ -51,13 +58,13 @@ function create() {
 
     // player.body.bounce.y = 0.5;
     // player.body.bounce.x = 0.5;
-    player.body.gravity.y = 300;
+    player.body.gravity.y = 500;
 
 
     player.body.collideWorldBounds = true;
     player.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
     player.animations.add('right', [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, true);
-
+    player.anchor.setTo(.5, 1);
 
     stars = game.add.group();
     stars.enableBody = true;
@@ -80,10 +87,14 @@ function create() {
     cursors.jump = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
 
-    var deathStarGroup = game.add.group();
-    deathStarGroup.enableBody = true;
+    // var deathStarGroup = game.add.group();
+    // deathStarGroup.enableBody = true;
 
-    deathStar = deathStarGroup.create(100, game.world.height - 200, 'star');
+    deathStar = game.add.sprite(100, 100, 'star');
+    deathStar.tint = 0x000000;
+    deathStar.scale.setTo(2,2);
+    game.physics.arcade.enableBody(deathStar);
+    // deathStar.enableBody = true;
     deathStar.body.gravity.y = 300;
     deathStar.body.bounce.y = 0.7 + Math.random() * 0.2;
 }
@@ -98,13 +109,17 @@ var move = {
     left: function(element, speed){
         element.body.velocity.x = -speed;
         element.animations.play('left');
+        element.scale.x = 1;
     },
     right: function(element, speed){
         element.body.velocity.x = speed;
         element.animations.play('right');
+        element.scale.x = -1;
     },
     jump: function(element, speed){
-        element.body.velocity.y = -speed * 2;
+        if (!element.body.touching.down)
+            return;
+        element.body.velocity.y = -speed * 3;
     }
 };
 
@@ -115,7 +130,7 @@ function stop(element){
     // element.body.velocity.y = 0;
 };
 
-function dispath_movement(player, cursors){
+function dispatch_movement(player, cursors){
     ['up', 'down', 'left', 'right', 'jump'].filter(function(direction){
         if (cursors[direction].isDown){
             move[direction](player, 150);
@@ -126,9 +141,9 @@ function dispath_movement(player, cursors){
 
 function update() {
 
-    // game.physics.arcade.collide(player, platforms);
     game.physics.arcade.collide(stars, platforms);
     game.physics.arcade.collide(deathStar, platforms);
+    // game.physics.arcade.collide(player, ground);
 
     // player.body.velocity.x = 0;
     // player.body.velocity.y = 0;
@@ -136,22 +151,29 @@ function update() {
     game.physics.arcade.overlap(player, deathStar, function(a, b){
         b.tint = 0xff0000;
         a.tint = 0x00ff00;
-        a.scale.setTo(1.5, 1.5);
-    });
-    game.physics.arcade.overlap(player, platforms, function(a, b){
-        console.log(arguments);
-        // b.tint = 0xff0000;
-        // a.tint = 0x00ff00;
+        // a.setAnchor(0.5, 0.5);
+        // a.anchor.x = 0.5;
+        // a.anchor.y = 1.5;
+
         // a.scale.setTo(1.5, 1.5);
-        b.body.immovable = false;
-        a.body.immovable = false;
+    });
+
+    game.physics.arcade.collide(player, platforms, function(player, the_platform){
+        // console.log(arguments);
+        if ([lowerLedge, upperLedge].indexOf(the_platform) == -1)
+            return;
+        console.log(arguments);
+        the_platform.tint = 0xff00ff;
+        player.tint = 0xf0f000;
+        // a.scale.setTo(1.5, 1.5);
+        the_platform.body.immovable = false;
+        the_platform.body.gravity.y = 3000;
+        // a.body.immovable = false;
         // a.immovable = false;
     });
     game.physics.arcade.overlap(player, stars, collectStar, null, this);
 
-    dispath_movement(player, cursors);
-    console.log(cursors.jump.isDown)
-
+    dispatch_movement(player, cursors);
 
 
 //     if (cursors.left.isDown)
