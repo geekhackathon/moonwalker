@@ -7,7 +7,7 @@ function preload() {
     game.load.image('ground', 'assets/platform.png');
     game.load.image('star', 'assets/star.png');
     game.load.spritesheet('dude', 'assets/mj.png', 32, 75);
-    game.load.audio('music', 'assets/music.mp3', 'assets/music.ogg');
+    // game.load.audio('music', 'assets/music.ogg', 'assets/music.mp3');
 }
 
 var player;
@@ -22,9 +22,56 @@ var deathStar;
 var upperLedge;
 var lowerLedge;
 
+// function preload(){
+//     console.log(game);
+//     // var music = game.add.audio('music');
+//     // console.log(music);
+//     // music.play();
+// }
+
+var createGround = function(platforms){
+  var ground = platforms.create(0, game.world.height - 64, 'ground');
+  ground.scale.setTo(2, 2);
+  ground.body.immovable = true;
+};
+
+var createLedge = function(platformGroup, name, x, y){
+  var createdLedge = platformGroup.create(x, y, 'ground');
+  platformGroup.collapsable = platformGroup.collapsable || [];
+  platformGroup.collapsable.push(createdLedge);
+  createdLedge.body.immovable = true;
+  createdLedge.body.checkCollision = {
+    down: false
+  }
+};
+
+var createPlayer = function(){
+  var player = game.add.sprite(32, game.world.height - 200, 'dude');
+  game.physics.arcade.enable(player);
+
+  player.body.gravity.y = 500;
+
+  player.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
+  player.animations.add('right', [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, true);
+  player.anchor.setTo(.5, 0);
+  player.body.collideWorldBounds = true;
+  // player.body.height *= 0.5;
+  return player;
+};
+
+var createDeathStar = function(){
+  var deathStar = game.add.sprite(100, -1500, 'star');
+  deathStar.tint = 0x000000;
+  // deathStar.scale.setTo(2,2);
+  game.physics.arcade.enableBody(deathStar);
+  // deathStar.body.immovable = true;
+  // deathStar.enableBody = true;
+  deathStar.body.gravity.y = 3;
+  deathStar.body.bounce.y = 0.7 + Math.random() * 0.2;
+  return deathStar;
+};
+
 function create() {
-    var music = game.add.audio('music');
-    music.play();
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -33,38 +80,15 @@ function create() {
     platforms = game.add.group();
     platforms.enableBody = true;
 
-    // movablePlatforms = game.add.group();
+    createGround(platforms);
 
-    var ground = platforms.create(0, game.world.height - 64, 'ground');
+    createLedge(platforms, 'upper', game.world.width - 400, game.world.height - 200);
+    createLedge(platforms, 'lower', -150, 250);
 
-    ground.scale.setTo(2, 2);
-    ground.body.immovable = true;
-
-    upperLedge = platforms.create(game.world.width - 400, game.world.height - 200, 'ground');
-    upperLedge.body.immovable = true;
-    upperLedge.body.checkCollision.down = false;
-    // upperLedge.body.checkCollision.left = false;
-
-    lowerLedge = platforms.create(-150, 250, 'ground');
-    lowerLedge.body.immovable = true;
-    lowerLedge.body.checkCollision.down = false;
-    // lowerLedge.body.checkCollision.right = false;
-
-    player = game.add.sprite(32, game.world.height - 200, 'dude');
-    game.physics.arcade.enable(player);
-
-    // movablePlatforms.add(lowerLedge);
-    // movablePlatforms.add(upperLedge);
-
-    // player.body.bounce.y = 0.5;
-    // player.body.bounce.x = 0.5;
-    player.body.gravity.y = 500;
-
-
-    player.body.collideWorldBounds = true;
-    player.animations.add('left', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], 10, true);
-    player.animations.add('right', [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], 10, true);
-    player.anchor.setTo(.5, 1);
+    player = createPlayer();
+    // player.body.angularVelocity = 200;
+    // console.log(player.body.height);
+    // console.log(player.body.height /= 2);
 
     stars = game.add.group();
     stars.enableBody = true;
@@ -86,17 +110,7 @@ function create() {
     cursors = game.input.keyboard.createCursorKeys();
     cursors.jump = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
-
-    // var deathStarGroup = game.add.group();
-    // deathStarGroup.enableBody = true;
-
-    deathStar = game.add.sprite(100, 100, 'star');
-    deathStar.tint = 0x000000;
-    deathStar.scale.setTo(2,2);
-    game.physics.arcade.enableBody(deathStar);
-    // deathStar.enableBody = true;
-    deathStar.body.gravity.y = 300;
-    deathStar.body.bounce.y = 0.7 + Math.random() * 0.2;
+    deathStar = createDeathStar();
 }
 
 var move = {
@@ -127,7 +141,6 @@ function stop(element){
     element.animations.stop();
     element.frame = 0;
     element.body.velocity.x = 0;
-    // element.body.velocity.y = 0;
 };
 
 function dispatch_movement(player, cursors){
@@ -155,19 +168,19 @@ function update() {
         // a.anchor.x = 0.5;
         // a.anchor.y = 1.5;
 
-        // a.scale.setTo(1.5, 1.5);
+        a.scale.setTo(1.5, 1.5);
     });
 
     game.physics.arcade.collide(player, platforms, function(player, the_platform){
         // console.log(arguments);
-        if ([lowerLedge, upperLedge].indexOf(the_platform) == -1)
+        if (platforms.collapsable.indexOf(the_platform) == -1)
             return;
         console.log(arguments);
         the_platform.tint = 0xff00ff;
         player.tint = 0xf0f000;
         // a.scale.setTo(1.5, 1.5);
         the_platform.body.immovable = false;
-        the_platform.body.gravity.y = 3000;
+        // the_platform.body.gravity.y = 3000;
         // a.body.immovable = false;
         // a.immovable = false;
     });
